@@ -1,0 +1,853 @@
+openapi: 3.0.3
+
+info:
+  title: Capstone API
+  description: >
+    RESTful API for the Year Up capstone project.
+    Built with Spring Boot 4, Java 17, MySQL, and JWT authentication.
+    Authenticate via POST /login to receive a JWT Bearer token.
+    Pass it as "Authorization: Bearer {token}" on all protected requests.
+    Tokens expire after 30 hours.
+    Roles: ROLE_USER (standard user), ROLE_ADMIN (can manage products and categories).
+    Endpoints marked (@todo) are student assignments not yet implemented.
+  version: 1.0.0
+  contact:
+    name: Year Up Capstone
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: Login and register - no token required
+  - name: Products
+    description: Browse, search, and manage products
+  - name: Categories
+    description: Manage product categories
+  - name: Shopping Cart
+    description: Manage the authenticated user's shopping cart
+  - name: Profile
+    description: Manage the authenticated user's profile
+  - name: Orders
+    description: Checkout and order management
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT from POST /login. Header: Authorization: Bearer {token}"
+
+  schemas:
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: johndoe
+        password:
+          type: string
+          format: password
+          example: "p@ssw0rd"
+
+    RegisterRequest:
+      type: object
+      required: [username, password, confirmPassword, role]
+      properties:
+        username:
+          type: string
+          example: johndoe
+        password:
+          type: string
+          format: password
+          example: "p@ssw0rd"
+        confirmPassword:
+          type: string
+          format: password
+          example: "p@ssw0rd"
+        role:
+          type: string
+          example: ROLE_USER
+          enum: [ROLE_USER, ROLE_ADMIN]
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huZG9lIn0.abc123"
+        user:
+          $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      description: Authenticated user record. Password is never returned.
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: johndoe
+        role:
+          type: string
+          example: ROLE_USER
+        authorities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Authority'
+
+    Authority:
+      type: object
+      properties:
+        name:
+          type: string
+          example: ROLE_USER
+
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+          readOnly: true
+          example: 1
+        name:
+          type: string
+          example: "Smartphone"
+        price:
+          type: number
+          format: decimal
+          example: 499.99
+        categoryId:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: "A powerful and feature-rich smartphone."
+        subCategory:
+          type: string
+          example: "Black"
+        stock:
+          type: integer
+          example: 50
+        featured:
+          type: boolean
+          example: false
+        imageUrl:
+          type: string
+          example: "smartphone.jpg"
+
+    Category:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          readOnly: true
+          example: 1
+        name:
+          type: string
+          example: "Electronics"
+        description:
+          type: string
+          example: "Gadgets and consumer electronics"
+
+    ShoppingCart:
+      type: object
+      description: The current user's cart. Items map is keyed by productId.
+      properties:
+        items:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ShoppingCartItem'
+          example:
+            "1":
+              product:
+                productId: 1
+                name: "Smartphone"
+                price: 499.99
+                categoryId: 1
+                description: "A powerful and feature-rich smartphone."
+                subCategory: "Black"
+                stock: 50
+                featured: false
+                imageUrl: "smartphone.jpg"
+              quantity: 2
+              discountPercent: 0
+              lineTotal: 999.98
+            "15":
+              product:
+                productId: 15
+                name: "External Hard Drive"
+                price: 129.99
+                categoryId: 1
+                description: "Expand your storage with this external hard drive."
+                subCategory: "Gray"
+                stock: 25
+                featured: true
+                imageUrl: "external-hard-drive.jpg"
+              quantity: 1
+              discountPercent: 0
+              lineTotal: 129.99
+        total:
+          type: number
+          format: decimal
+          readOnly: true
+          example: 1129.97
+
+    ShoppingCartItem:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type: integer
+          example: 2
+        discountPercent:
+          type: number
+          format: decimal
+          example: 0
+        lineTotal:
+          type: number
+          format: decimal
+          readOnly: true
+          example: 999.98
+
+    UpdateCartItemRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 3
+
+    Profile:
+      type: object
+      properties:
+        userId:
+          type: integer
+          readOnly: true
+          example: 1
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phone:
+          type: string
+          example: "555-867-5309"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        address:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "Anytown"
+        state:
+          type: string
+          example: "NY"
+        zip:
+          type: string
+          example: "12345"
+
+    Order:
+      type: object
+      description: A completed order created from the user's shopping cart at checkout.
+      properties:
+        orderId:
+          type: integer
+          readOnly: true
+          example: 42
+        userId:
+          type: integer
+          readOnly: true
+          example: 1
+        date:
+          type: string
+          format: date
+          readOnly: true
+          example: "2026-02-25"
+        address:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "Dallas"
+        state:
+          type: string
+          example: "TX"
+        zip:
+          type: string
+          example: "75001"
+        shippingAmount:
+          type: number
+          format: decimal
+          example: 0.00
+        lineItems:
+          type: array
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/OrderLineItem'
+
+    OrderLineItem:
+      type: object
+      properties:
+        orderLineItemId:
+          type: integer
+          readOnly: true
+          example: 1
+        orderId:
+          type: integer
+          readOnly: true
+          example: 42
+        product:
+          $ref: '#/components/schemas/Product'
+        quantity:
+          type: integer
+          example: 2
+        salesPrice:
+          type: number
+          format: decimal
+          example: 499.99
+        discount:
+          type: number
+          format: decimal
+          example: 0.00
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: "Not Found"
+        message:
+          type: string
+          example: "Resource not found"
+
+paths:
+
+  # ========== AUTHENTICATION ==========
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Login
+      description: Authenticate with username and password. Returns a JWT token for use in all subsequent authenticated requests.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: johndoe
+              password: "p@ssw0rd"
+      responses:
+        '200':
+          description: Login successful. JWT token returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      description: Create a new user account. Passwords must match. Returns the created user (HTTP 201).
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error - passwords do not match or fields are missing
+        '409':
+          description: Username already taken
+
+  # ========== PRODUCTS ==========
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Search / list products
+      description: Returns all products, optionally filtered by category, price range, and subcategory. All parameters are optional.
+      operationId: searchProducts
+      security: []
+      parameters:
+        - name: cat
+          in: query
+          description: Filter by category ID
+          required: false
+          schema:
+            type: integer
+          example: 1
+        - name: minPrice
+          in: query
+          description: Minimum price (inclusive)
+          required: false
+          schema:
+            type: number
+            format: decimal
+          example: 10.00
+        - name: maxPrice
+          in: query
+          description: Maximum price (inclusive)
+          required: false
+          schema:
+            type: number
+            format: decimal
+          example: 500.00
+        - name: subCategory
+          in: query
+          description: Filter by subcategory name
+          required: false
+          schema:
+            type: string
+          example: Black
+      responses:
+        '200':
+          description: Array of matching products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+    post:
+      tags: [Products]
+      summary: Add product (Admin only)
+      description: Create a new product. Requires ROLE_ADMIN.
+      operationId: addProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+
+  /products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      operationId: getProductById
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+    put:
+      tags: [Products]
+      summary: Update product (Admin only)
+      description: Update an existing product by ID. Requires ROLE_ADMIN.
+      operationId: updateProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Product updated
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+        '404':
+          description: Product not found
+
+    delete:
+      tags: [Products]
+      summary: Delete product (Admin only)
+      description: Delete a product by ID. Requires ROLE_ADMIN.
+      operationId: deleteProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product deleted
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+        '404':
+          description: Product not found
+
+  # ========== CATEGORIES ==========
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories (@todo)
+      description: Returns all product categories. @todo - CategoriesController.getAll() stub exists but is not implemented. The controller is also missing @RestController, @RequestMapping, and @CrossOrigin annotations.
+      operationId: getAllCategories
+      security: []
+      responses:
+        '200':
+          description: List of all categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+    post:
+      tags: [Categories]
+      summary: Add category - Admin only (@todo)
+      description: Create a new category. Requires ROLE_ADMIN. @todo - CategoriesController.addCategory() stub exists but is not implemented.
+      operationId: addCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+
+  /categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by ID (@todo)
+      description: Returns a single category by ID. @todo - CategoriesController.getById() stub exists but is not implemented.
+      operationId: getCategoryById
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found
+
+    put:
+      tags: [Categories]
+      summary: Update category - Admin only (@todo)
+      description: Update a category by ID. Requires ROLE_ADMIN. @todo - CategoriesController.updateCategory() stub exists but is not implemented.
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Category updated
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+        '404':
+          description: Category not found
+
+    delete:
+      tags: [Categories]
+      summary: Delete category - Admin only (@todo)
+      description: Delete a category by ID. Requires ROLE_ADMIN. @todo - CategoriesController.deleteCategory() stub exists but is not implemented.
+      operationId: deleteCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category deleted
+        '401':
+          description: Missing or invalid token
+        '403':
+          description: Forbidden - ROLE_ADMIN required
+        '404':
+          description: Category not found
+
+  /categories/{categoryId}/products:
+    get:
+      tags: [Categories]
+      summary: Get products in a category (@todo)
+      description: Returns all products belonging to the given category. @todo - CategoriesController.getProductsById() stub exists but is not implemented.
+      operationId: getProductsByCategory
+      security: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Products in the category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '404':
+          description: Category not found
+
+  # ========== SHOPPING CART ==========
+
+  /cart:
+    get:
+      tags: [Shopping Cart]
+      summary: Get current user's cart (@todo)
+      description: Returns the full shopping cart for the logged-in user, including all items and the computed total. @todo - ShoppingCartController.getCart() stub exists but is not implemented. Controller is also missing @RestController, @RequestMapping, and @CrossOrigin annotations.
+      operationId: getCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The current user's shopping cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCart'
+        '401':
+          description: Unauthorized - must be logged in
+
+    delete:
+      tags: [Shopping Cart]
+      summary: Clear cart (@todo)
+      description: Deletes all items from the current user's cart. @todo - ShoppingCartController clear cart method is not yet implemented.
+      operationId: clearCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+        '401':
+          description: Unauthorized - must be logged in
+
+  /cart/products/{productId}:
+    post:
+      tags: [Shopping Cart]
+      summary: Add product to cart (@todo)
+      description: Adds a product to the cart with quantity 1. If the product is already in the cart, increments the quantity by 1. No request body needed - the product ID is in the URL. @todo - ShoppingCartController add-product method is not yet implemented.
+      operationId: addProductToCart
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: ID of the product to add
+          schema:
+            type: integer
+          example: 15
+      responses:
+        '200':
+          description: Product added or quantity incremented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCartItem'
+        '401':
+          description: Unauthorized - must be logged in
+        '404':
+          description: Product not found
+
+    put:
+      tags: [Shopping Cart]
+      summary: Update cart item quantity (@todo)
+      description: Sets a new quantity for a product already in the cart. The product must already be in the cart. @todo - ShoppingCartController update-item method is not yet implemented.
+      operationId: updateCartItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: ID of the product to update
+          schema:
+            type: integer
+          example: 15
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+            example:
+              quantity: 3
+      responses:
+        '200':
+          description: Cart item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShoppingCartItem'
+        '401':
+          description: Unauthorized - must be logged in
+        '404':
+          description: Product not in cart
+
+  # ========== PROFILE ==========
+
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get current user's profile (@todo)
+      description: Returns the profile for the currently logged-in user. @todo - ProfileController is not yet implemented.
+      operationId: getProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized - must be logged in
+
+    put:
+      tags: [Profile]
+      summary: Update current user's profile (@todo)
+      description: Updates the profile for the currently logged-in user. @todo - ProfileController is not yet implemented.
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profile'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '401':
+          description: Unauthorized - must be logged in
+
+  # ========== ORDERS ==========
+
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Checkout - create order from cart (@todo)
+      description: Converts the current user's shopping cart into a new order. Creates a record in the orders table and one order line item per cart item, then clears the cart. No request body required. @todo - OrdersController does not yet exist and must be created from scratch.
+      operationId: checkout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Order created and cart cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Cart is empty
+        '401':
+          description: Unauthorized - must be logged in

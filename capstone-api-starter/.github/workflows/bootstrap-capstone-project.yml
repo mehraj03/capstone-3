@@ -1,0 +1,78 @@
+name: Bootstrap Capstone Project
+
+# Creates a GitHub issue (a "user story") for each capstone bug the first time this
+# repo is pushed to GitHub, so students have a starting point on their board. It is
+# idempotent — it only creates the issues once, so it is safe to leave in place.
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create capstone issues (once)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # --- idempotency: do nothing if the capstone issues already exist ---
+          count=$(gh issue list --state all --label capstone --json number --jq 'length' 2>/dev/null || echo 0)
+          if [ "${count:-0}" -gt 0 ]; then
+            echo "Capstone issues already exist (${count}); nothing to do."
+            exit 0
+          fi
+
+          # --- make sure the labels exist (ignore "already exists") ---
+          ensure_label() { gh label create "$1" --color "$2" --description "$3" 2>/dev/null || true; }
+          ensure_label capstone 0E8A16 "Capstone 3 work item"
+          ensure_label bug      D73A4A "A bug to find and fix"
+          ensure_label required 5319E7 "Required for the capstone"
+
+          # --- create one issue per markdown file in .github/capstone-issues/ ---
+          shopt -s nullglob
+          for f in .github/capstone-issues/*.md; do
+            title=$(sed -n 's/^title:[[:space:]]*//p' "$f" | head -1 | sed 's/^"//; s/"$//')
+            labels=$(sed -n 's/^labels:[[:space:]]*//p' "$f" | head -1)
+            # body = everything after the closing '---' of the front matter
+            awk 'b{print} /^---[[:space:]]*$/{n++; if(n==2){b=1}}' "$f" > /tmp/body.md
+
+            label_args=(--label capstone)
+            IFS=',' read -ra parts <<< "$labels"
+            for l in "${parts[@]}"; do
+              l="$(echo "$l" | xargs)"
+              [ -n "$l" ] && label_args+=(--label "$l")
+            done
+
+            echo "Creating issue: $title"
+            gh issue create --title "$title" --body-file /tmp/body.md "${label_args[@]}"
+          done
+
+          total=$(gh issue list --state all --label capstone --json number --jq 'length')
+          echo "Done. Created ${total} capstone issues."
+
+      # ------------------------------------------------------------------
+      # OPTIONAL: also add every new issue to a GitHub Project (v2) board.
+      # Easiest path (no extra setup): create a Project, then in the Project's
+      #   Settings -> Workflows -> "Auto-add to project", filter by  label:capstone
+      # and every issue created above will land on the board automatically.
+      #
+      # If you'd rather have this workflow add them, create a PAT with the
+      # 'project' scope, store it as the ADD_TO_PROJECT_PAT secret, set your
+      # project URL below, and uncomment:
+      #
+      # - uses: actions/add-to-project@v1.0.2
+      #   with:
+      #     project-url: https://github.com/users/<your-username>/projects/<n>
+      #     github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+      #     labeled: capstone
+      # ------------------------------------------------------------------
