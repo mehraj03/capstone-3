@@ -21,7 +21,7 @@ public class CategoriesController
     private ProductService productService;
 
 
-    // create an Autowired constructor to inject the categoryService and productService
+    // create  an Autowired constructor to inject the categoryService and productService
 
     // add the appropriate annotation for a get action
     public List<Category> getAll()
