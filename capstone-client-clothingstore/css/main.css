@@ -1,3 +1,29 @@
+/* ===== Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    --color-gold: #fdcb6e;
+    --color-gold-light: #ffeaa7;
+    --color-terracotta: #e17055;
+    --color-terracotta-dark: #c85a3f;
+    --color-charcoal: #2d3436;
+    --color-cream: #f7f3ee;
+    --color-card-border: #e8e2d8;
+}
+
+body {
+    background-color: var(--color-cream);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--color-charcoal);
+}
+
+h1, h2, h3, h4, h5, .modal-title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* ===== Header ===== */
 header
 {
     display: flex;
@@ -6,11 +32,11 @@ header
 
     height: 10vh;
 
-    padding: 5px 15px;
-    border-bottom: solid 1px #e17055;
-    box-shadow: 5px 2px #e17055;
-    background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-    color: #2d3436;
+    padding: 5px 24px;
+    border-bottom: solid 1px var(--color-terracotta);
+    box-shadow: 0 2px 8px rgba(45, 52, 54, 0.08);
+    background: linear-gradient(135deg, var(--color-gold-light), var(--color-gold));
+    color: var(--color-charcoal);
 }
 
 header img
@@ -26,19 +52,23 @@ header div{
 
 header #links
 {
-    gap: 20px;
+    gap: 28px;
     justify-content: flex-start;
     align-items: flex-end;
     padding-right: 20px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05em;
 }
 
 header a {
-    color: #2d3436;
+    color: var(--color-charcoal);
     text-decoration: none;
+    transition: color 0.15s ease;
 }
 
 header a:hover {
-    color: #e17055;
+    color: var(--color-terracotta-dark);
 }
 
 header .cart
@@ -47,6 +77,12 @@ header .cart
     padding-left: 10px;
     padding-right: 10px;
     cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+header .cart:hover
+{
+    transform: scale(1.08);
 }
 
 header .cart #cart-items
@@ -55,8 +91,11 @@ header .cart #cart-items
     height: 50%;
     align-items: start;
     padding-left: 5px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
 }
 
+/* ===== Main layout ===== */
 main
 {
     display: grid;
@@ -68,11 +107,18 @@ main
 main > .filter-box
 {
     width: 350px;
-    padding: 15px;
+    padding: 20px 24px;
+}
+
+main > .filter-box h1, main > .filter-box h2
+{
+    font-size: 1.6em;
+    margin-bottom: 18px;
 }
 
 main #min-price .slider-selection {
-    background: #BABABA;
+    background: var(--color-terracotta);
+    opacity: 0.5;
 }
 
 main > .content
@@ -82,19 +128,21 @@ main > .content
     width: 100%;
     height: 87vh;
     overflow: scroll;
+    padding: 4px 16px 4px 0;
 }
 
 main > .content-form
 {
     display: flex;
     flex-direction: column;
-    padding-right: 20px;
+    padding: 20px 24px;
 }
 
 main > .content-form .cart-header,
 main > .content-form .cart-item
 {
-    border-bottom: solid 1px #ccc;
+    border-bottom: solid 1px var(--color-card-border);
+    padding: 14px 4px;
 }
 
 .content-form .photo
@@ -107,7 +155,8 @@ main > .content-form .cart-item
 {
     width: 100px;
     cursor: pointer;
-    border: solid 1px #ccc;
+    border: solid 1px var(--color-card-border);
+    border-radius: 6px;
 }
 
 .content-form .cart-header
@@ -117,51 +166,101 @@ main > .content-form .cart-item
     align-items: center;
 }
 
-.content-form .cart-total
+.content-form .cart-header h1
 {
-    margin: 10px 0;
-    color: maroon;
+    font-size: 1.8em;
+    margin: 0;
 }
 
+.content-form .cart-total
+{
+    margin: 16px 4px;
+    color: var(--color-terracotta-dark);
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: 1.3em;
+}
+
+/* ===== Product cards ===== */
 .product
 {
     display: flex;
     flex-direction: column;
-
     justify-content: space-between;
-    /*width: 30%;*/
-    border: solid 1px #ccc;
-    padding: 5px;
-    border-radius: 5px;
-    margin: 5px;
+
+    background: #ffffff;
+    border: solid 1px var(--color-card-border);
+    padding: 14px;
+    border-radius: 10px;
+    margin: 8px;
+    box-shadow: 0 1px 3px rgba(45, 52, 54, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+
+.product:hover
+{
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(45, 52, 54, 0.12);
+}
+
+.product h3, .product h4, .product h5
+{
+    font-size: 1.15em;
+    margin-bottom: 4px;
+}
+
 .product  .photo
 {
     display: flex;
     justify-content: space-between;
-    padding: 0 10px 10px 10px;
+    padding: 0 6px 12px 6px;
 }
 .product  .photo > img
 {
     width: 33%;
     cursor: pointer;
-    border: solid 1px #ccc;
+    border: solid 1px var(--color-card-border);
+    border-radius: 6px;
 }
 
 .product .price
 {
-    font-weight: 900;
-    color: #e17055;
+    display: inline-block;
+    font-weight: 700;
+    font-family: 'Fraunces', Georgia, serif;
+    color: #ffffff;
+    background: var(--color-terracotta);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.95em;
 }
 
 .modal-body img
 {
     width:100%;
+    border-radius: 8px;
 }
 
 .product > .add-button
 {
     display: flex;
+}
+
+.product .btn-primary,
+.content-form .btn-primary,
+.modal-footer .btn-primary
+{
+    background-color: var(--color-terracotta);
+    border-color: var(--color-terracotta);
+    font-weight: 600;
+}
+
+.product .btn-primary:hover,
+.content-form .btn-primary:hover,
+.modal-footer .btn-primary:hover
+{
+    background-color: var(--color-terracotta-dark);
+    border-color: var(--color-terracotta-dark);
 }
 
 .visible
@@ -180,7 +279,7 @@ main > .content-form .cart-item
     justify-content: center;
     position: absolute;
     top: 0;
-    background-color: #777777aa;
+    background-color: #2d3436aa;
     width: 100vw;
     height: 100vh;
     z-index: 1000;
@@ -190,6 +289,12 @@ main > .content-form .cart-item
 .modal-dialog
 {
     width: 50vw;
+}
+
+.modal-content
+{
+    border-radius: 12px;
+    border: none;
 }
 
 #errors
@@ -209,5 +314,5 @@ main > .content-form .cart-item
 .alert
 {
     margin-bottom: 2px !important;
+    border-radius: 8px !important;
 }
-
