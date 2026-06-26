@@ -6,6 +6,7 @@ import org.yearup.models.Product;
 import org.yearup.models.ShoppingCart;
 import org.yearup.models.ShoppingCartItem;
 import org.yearup.repository.ShoppingCartRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -73,7 +74,7 @@ public class ShoppingCartService
 
         return getByUserId(userId);
     }
-
+    @Transactional
     public void clearCart(int userId)
     {
         shoppingCartRepository.deleteByUserId(userId);
